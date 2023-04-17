@@ -19,7 +19,7 @@ def split_fasta(input_file, pattern, output_dir):
             record.id = "{}:0:{}\n".format(record.id, len(record))
             record.description = ""
             SeqIO.write(record,
-                        output_filename.abspath(),
+                        str(output_filename),
                         "fasta")
 
 
