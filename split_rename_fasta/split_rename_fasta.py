@@ -11,16 +11,17 @@ def split_fasta(input_file, pattern, output_dir):
     for record in SeqIO.parse(input_file, "fasta"):
         if regex.match(record.id):
             # Use the sequence ID as the filename
-            filename = Path.joinpath(output_dir, "{}.fasta".format(record.id))
+            output_filename = Path.joinpath(output_dir, "{}.fasta".format(record.id))
             if not output_dir.exists():
                 print(f"Creating {output_dir}")
                 output_dir.mkdir(parents=True, exist_ok=True)
 
-            with open(filename, "w") as output_file:
-                # Write the new header
-                output_file.write(">{}:0:{}\n".format(record.id, len(record)))
-                # Write the sequence
-                output_file.write(str(record.seq) + "\n")
+            record.id = "{}:0:{}\n".format(record.id, len(record))
+            record.description = ""
+            SeqIO.write(record,
+                        output_filename,
+                        "fasta")
+
 
 
 if __name__ == "__main__":
