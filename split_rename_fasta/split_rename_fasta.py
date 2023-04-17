@@ -11,7 +11,7 @@ def split_fasta(input_file, pattern, output_dir):
     for record in SeqIO.parse(input_file, "fasta"):
         if regex.match(record.id):
             # Use the sequence ID as the filename
-            output_filename = Path.joinpath(output_dir, "{}.fasta".format(record.id))
+            output_filename = Path.joinpath(output_dir, "{}.fa".format(record.id))
             if not output_dir.exists():
                 print(f"Creating {output_dir}")
                 output_dir.mkdir(parents=True, exist_ok=True)
