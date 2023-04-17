@@ -15,9 +15,9 @@ def split_fasta(input_file, pattern, output_dir):
             if not output_dir.exists():
                 print(f"Creating {output_dir}")
                 output_dir.mkdir(parents=True, exist_ok=True)
-
-            record.id = "{}:0:{}\n".format(record.id, len(record))
-            record.description = ""
+            seq_length = str(len(record)).strip()
+            record.id = record.id.strip()
+            record.description = ":{}:{}".format(seq_length, seq_length)
             SeqIO.write(record,
                         str(output_filename),
                         "fasta")
