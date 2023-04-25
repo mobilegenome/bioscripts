@@ -47,20 +47,47 @@ def merge_reverse_strand_calls(df: pd.DataFrame,
 
     print("joining dataframes")
     df_merged = dfs_split["forward"].merge(dfs_split["reverse"],
-                                                how="left",
+                                                how="outer",
                                                 left_on=["seqname", "start"],
                                                 right_on=["seqname", "start-1"],
                                                 suffixes=["_fw", "_rev"])
+
+    # replace unmatched sites, that are only occurring on the reverse strand, ie. where
+    # no matching site is found on the forward strand
+    row_indexer = np.isnan(df_merged.start_fw) & df_merged.start_rev
+    df_merged.loc[row_indexer, ["numCs_fw", "numTs_fw"]] = 0
+    df_merged.loc[row_indexer, "start"] = df_merged[row_indexer].start_rev
+
+
+    # replace unmatched sites on the reverse side, where the corresponding side on the reverse strand
+    # is missing
+    row_indexer = np.isnan(df_merged.start_rev) & df_merged.start_fw
+    df_merged.loc[row_indexer, "numCs_rev"] = 0
+    df_merged.loc[row_indexer, "numTs_rev"] = 0
+    df_merged.loc[row_indexer, "start"] = df_merged[row_indexer].start_fw
+
 
     print("adding read counts")
     df_merged["numCs"] = df_merged.numCs_fw + df_merged.numCs_rev
     df_merged["numTs"] = df_merged.numTs_fw + df_merged.numTs_rev
 
 
+
     print("calculate percentage mCpG")
     df_merged["perc_mCpG"] = df_merged.numCs / (df_merged.numCs + df_merged.numTs) * 100
-    df_merged["start"] = df_merged["start-1"].astype('Int64')
-    df_merged["end"] = df_merged["start-1"].astype('Int64')
+
+
+    # fill left-over NaN "start",
+    # i.e. matching forward and reverse sites with the forward start position
+    row_indexer = np.isnan(df_merged.start) & df_merged.start_fw & df_merged.start_rev
+    df_merged.loc[row_indexer, "start"] = df_merged.start_fw
+
+    # check that no start value is missing:
+    if not df_merged.loc[np.isnan(df_merged.start)].empty:
+        print("Error. Found missing sites")
+
+    df_merged["start"] = df_merged["start"].astype('int')
+    df_merged["end"] = df_merged["start"].astype('int')
 
     print("drop unused columns")
     _column_filter = re.compile(".*_fw$|.*_rev$")
