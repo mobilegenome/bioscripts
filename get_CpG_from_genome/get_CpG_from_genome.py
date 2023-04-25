@@ -16,7 +16,6 @@ coverage information for these sites.
 
 import argparse
 import os
-import re
 import numpy as np
 import pandas as pd
 from Bio import SeqIO
@@ -39,7 +38,7 @@ args = parser.parse_args()
 
 # for testing
 #
-#args = parser.parse_args("-f test/input.fa -b test/input.bed -c 10 -o test/output".split(" "))
+#args = parser.parse_args("-f test/input.fa -b test/input.bismark.cov -c 10 -o test/output".split(" "))
 
 # read the input FASTA file using BioPython
 genome = SeqIO.to_dict(SeqIO.parse(args.fasta_file, "fasta"))
@@ -98,66 +97,3 @@ process_genome(bed_chunks)
 # done
 
 
-bed = pd.read_table("get_CpG_from_genome/test/output_tri.bed.gz")
-df[df.isna().any(axis=1)]
-bed.dropna(inplace=True)
-# define a function to extract DNA sequences
-
-def merge_reverse_strand_calls(df, context_column_label="REF_-1+1"):
-
-    if context_column_label not in df.columns:
-        print(f"Error. Column {context_column_label} not found in DataFrame.")
-
-    dfs_split = {
-        "forward": df[df["REF_-1+1"].str.endswith("CG")],
-        "reverse": df[df["REF_-1+1"].str.startswith("CG")]
-    }
-
-
-    map(lambda df: df.drop("perc_mCpG", axis=1, inplace=True), dfs_split.values]
-# filter and subset for testing
-df_cpg_fw, df_cpg_rev = [df[df["seqname"] == "chr25"] for df in [df_cpg_fw, df_cpg_rev]]
-df_cpg_fw, df_cpg_rev = [df.head() for df in [df_cpg_fw, df_cpg_rev]]
-
-df_cpg_rev["start-1"] = df_cpg_rev["start"] -1
-
-df_cpg_merged = df_cpg_fw.merge(df_cpg_rev,
-                                how="left",
-                                left_on=["seqname", "start"],
-                                right_on=["seqname", "start-1"],
-                                suffixes=["_fw", "_rev"])
-
-df_cpg_merged["numCs"] = df_cpg_merged["numCs_fw"] +df_cpg_merged["numCs_rev"]
-df_cpg_merged["numTs"] = df_cpg_merged["numTs_fw"] +df_cpg_merged["numTs_rev"]
-
-df_cpg_merged["perc_mCpG"] = \
-    df_cpg_merged["numCs"] / (df_cpg_merged["numCs"] + df_cpg_merged["numTs"]) * 100
-
-column_filter = re.compile(".*_fw$|.*_rev$")
-column_filter_list = list(filter(column_filter.search, df_cpg_merged.columns))
-df_cpg_merged.drop(column_filter_list, axis=1, inplace = True)
-
-del df_cpg_merged
-
-for idx, row in bed.iterrows():
-    seqname = row["seqname"]
-    pos = row["start"]
-    context = row["REF_-1+1"]
-
-    # is a forward CpG site? then nothing to do
-    row_cpg = df_cpg[(df_cpg["seqname"] == seqname) & (df_cpg["start"] == pos)]
-
-    # is a reverse CpG site
-    if context.startswith("CG"):
-        # and previous site is
-        row_cpg_previous = df_cpg[(df_cpg["seqname"] == seqname) & (df_cpg["start"] == pos-1)]
-        row_loc = (df_cpg["seqname"] == seqname) & (df_cpg["start"] == pos - 1)
-        if not row_cpg_previous.empty:
-            df_cpg.loc[row_loc, ["numCs", "numTs"]] += row["numCs"], row["numTs"]
-            df_cpg.loc[row_loc, "perc_mCpG"] = \
-                df_cpg.loc[row_loc, "numCs"] / (df_cpg.loc[row_loc, "numCs"] + df_cpg.loc[row_loc, "numTs"]) * 100
-        else:
-            df_cpg[row_loc] = row
-
-
-df_cpg.to_csv(args.output_bed.replace(".bed.", ".CpG_forward.bed."), sep="\t", header=False, index=False, float_format="%.5f")

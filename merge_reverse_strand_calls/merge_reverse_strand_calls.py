@@ -1,15 +1,17 @@
+'''
+Merge bookended forward and reverse methylation calls.
+
+This script reads the output of "get_CpG_from_genome.py", separate strand
+and merge calls.
+'''
+
+
 import argparse
-import os
 import re
 import numpy as np
 import pandas as pd
 
 pd.options.mode.chained_assignment = None  # default='warn'
-
-
-COORDINATE_BASE = 1  # 1 for Bismark coverage file, 0 for BED file
-# set to the following to get upstream and downstream information separately ["+1", "-1", "-1+1"]:
-DIRECTIONS = ["-1+1"]
 
 # define command line arguments
 parser = argparse.ArgumentParser()
@@ -86,8 +88,12 @@ def merge_reverse_strand_calls(df: pd.DataFrame,
     if not df_merged.loc[np.isnan(df_merged.start)].empty:
         print("Error. Found missing sites")
 
-    df_merged["start"] = df_merged["start"].astype('int')
-    df_merged["end"] = df_merged["start"].astype('int')
+    # create a new "end" column that's equal to start
+    df_merged["end"] = df_merged["start"]
+
+    # convert count and coordinate columns to integers
+    integer_columns = ["start", "end", "numCs", "numTs"]
+    df_merged = df_merged.astype({col_label: "int" for col_label in integer_columns})
 
     print("drop unused columns")
     _column_filter = re.compile(".*_fw$|.*_rev$")
