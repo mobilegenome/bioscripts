@@ -1,0 +1,9 @@
+seqname	start	end	perc_mCpG	numCs	numTs	REF_-1+1
+chr1	2	2	100	2	0	TCG
+chr1	15	15	100	2	0	ACG
+chr1	17	17	100	2	0	GCG
+chr1	30	30	100	2	0	TCG
+chr1	43	43	100	2	0	ACG
+chr1	47	47	100	2	0	ACG
+chr2	2	2	100	2	0	ACG
+chr2	6	6	100	2	0	ACG
