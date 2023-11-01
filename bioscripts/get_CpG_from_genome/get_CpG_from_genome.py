@@ -92,20 +92,41 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--bed_file", help="path to the input BED file", required=True)
     parser.add_argument("-o", "--output_bed", help="path to the output BED file", required=True)
     parser.add_argument("-c", "--chunk_size", help="chunk size for reading FASTA file", type=int)
+    parser.add_argument("-m", "--methylkit", help="input is methylkit input", action="store_true")
 
     args = parser.parse_args()
 
     # read the input FASTA file using BioPython
     genome = SeqIO.to_dict(SeqIO.parse(args.fasta_file, "fasta"))
 
-    # read the input BED file using pandas
-    df_bed = pd.read_table(args.bed_file, names=["seqname", "start", "end", "perc_mCpG", "numCs", "numTs"],
-                           dtype={"seqname": str,
-                                  "start": int,
-                                  "end": int,
-                                  "perc_mCpG": float,
-                                  "numCs": int,
-                                  "numTs": int})
+    if args.methylkit:
+        #chrBase   chr    base strand coverage freqC  freqT
+        df_bed = pd.read_table(args.bed_file, header=0, sep="\t",
+                                dtype={"chrBase": str,
+                                        "chr": str,
+                                        "base": int,
+                                        "strand": str,
+                                        "coverage": int,
+                                        "freqC": float,
+                                        "freqT": float})
+        df_bed["seqname"] = df_bed["chr"]
+        df_bed["start"] = df_bed["base"]
+        df_bed["end"] = df_bed["base"]
+        df_bed["perc_mCpG"] = df_bed["freqC"]
+        df_bed["numCs"] =  df_bed["freqC"]/100 * df_bed["coverage"] 
+        df_bed["numCs"] = df_bed.numCs.astype('int')
+        df_bed["numTs"] = df_bed["freqT"]/100 *  df_bed["freqC"]
+        df_bed["numTs"] = df_bed.numTs.astype('int')
+        df_bed = df_bed[["seqname", "start", "end", "perc_mCpG", "numCs", "numTs"]]
+    else:
+        df_bed = pd.read_table(args.bed_file, names=["seqname", "start", "end", "perc_mCpG", "numCs", "numTs"],
+                        dtype={"seqname": str,
+                                "start": int,
+                                "end": int,
+                                "perc_mCpG": float,
+                                "numCs": int,
+                                "numTs": int})
+
 
     get_CpGs(df_bed)
 
