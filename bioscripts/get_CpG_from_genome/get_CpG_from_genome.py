@@ -115,7 +115,7 @@ if __name__ == "__main__":
         df_bed["perc_mCpG"] = df_bed["freqC"]
         df_bed["numCs"] =  df_bed["freqC"]/100 * df_bed["coverage"] 
         df_bed["numCs"] = df_bed.numCs.astype('int')
-        df_bed["numTs"] = df_bed["freqT"]/100 *  df_bed["freqC"]
+        df_bed["numTs"] = df_bed["freqT"]/100 *  df_bed["coverage"]
         df_bed["numTs"] = df_bed.numTs.astype('int')
         df_bed = df_bed[["seqname", "start", "end", "perc_mCpG", "numCs", "numTs"]]
     else:
